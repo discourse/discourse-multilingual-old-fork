@@ -1,7 +1,6 @@
 import { withPluginApi } from "discourse/lib/plugin-api";
 import { default as discourseComputed } from "discourse-common/utils/decorators";
 import { multilingualTagRenderer } from "../lib/multilingual-tag";
-import { multilingualCategoryLinkRenderer } from "../lib/multilingual-category";
 import {
   discoveryParams,
   localeParam,
@@ -37,13 +36,19 @@ export default {
     }
 
     I18n.translate_tag = function (tag) {
-      const translations = I18n.tag_translations || {};
-      return translations[tag] || tag;
+      if (
+        I18n.tag_translations !== undefined &&
+        I18n.tag_translations[I18n.default.currentLocale()] !== undefined &&
+        I18n.tag_translations[I18n.default.currentLocale()][tag] !== undefined
+      ) {
+        return I18n.tag_translations[I18n.default.currentLocale()][tag];
+      } else {
+        return tag;
+      }
     };
 
     withPluginApi("0.8.36", (api) => {
       api.replaceTagRenderer(multilingualTagRenderer);
-      api.replaceCategoryLinkRenderer(multilingualCategoryLinkRenderer);
 
       discoveryParams.forEach((param) => {
         api.addDiscoveryQueryParam(param, {
@@ -61,7 +66,7 @@ export default {
         availableLocales() {
           return this.site.interface_languages.map((l) => {
             return {
-              value: l.code,
+              value: l.locale,
               name: l.name,
             };
           });
@@ -96,14 +101,14 @@ export default {
               }
 
               if (rawUserLanguages) {
-                userLanguages = rawUserLanguages.map((code) => {
-                  return contentLanguages.find((l) => l.code === code);
+                userLanguages = rawUserLanguages.map((locale) => {
+                  return contentLanguages.find((l) => l.locale === locale);
                 });
               }
 
               // See workaround above
               userLanguages = userLanguages.filter(
-                (l) => l && isContentLanguage(l.code, siteSettings)
+                (l) => l && isContentLanguage(l.locale, siteSettings)
               );
 
               currentUser.set("content_languages", userLanguages);
