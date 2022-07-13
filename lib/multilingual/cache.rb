@@ -7,7 +7,7 @@ class Multilingual::Cache
 
   def self.load_classes
     %w[
-      custom_translation
+      translation_file
       content_tag
       content_tag/conflict
       language_exclusion
@@ -92,7 +92,6 @@ class Multilingual::Cache
   end
 
   def self.reset
-    self.load_classes if @listable_classes == nil
     @listable_classes.each { |klass| Multilingual::Cache.new(klass::KEY).delete }
 
     Multilingual::Translation::CUSTOM_TYPES.each do |type|
@@ -101,13 +100,7 @@ class Multilingual::Cache
   end
 
   def self.instantiate
-    @listable_classes.each do |klass|
-      if klass.respond_to?(:add_locale_to_cache)
-      # klass.send(:add_locale_to_cache)
-      else
-        klass.send(:all) if klass.respond_to?(:all)
-      end
-    end
+    @listable_classes.each { |klass| klass.send(:all) if klass.respond_to?(:all) }
     @state = 'cached'
   end
 
@@ -118,15 +111,16 @@ class Multilingual::Cache
     instantiate_core(opts)
   end
 
-  def self.refresh_clients(locales)
-    locales = [*locales].map(&:to_s)
-    changing_default = locales.include?(SiteSetting.default_locale.to_s)
+  def self.refresh_clients(codes)
+    codes = [*codes].map(&:to_s)
+    changing_default = codes.include?(SiteSetting.default_locale.to_s)
     user_ids = nil
 
     if !changing_default && SiteSetting.allow_user_locale
-      user_ids = User.where(locale: locales).pluck(:id)
+      user_ids = User.where(locale: codes).pluck(:id)
     end
-    if changing_default || user_ids.present?
+
+    if changing_default || user_ids
       Discourse.request_refresh!(user_ids: user_ids)
     end
   end

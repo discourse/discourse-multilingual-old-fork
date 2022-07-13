@@ -1,23 +1,23 @@
 # frozen_string_literal: true
 class Multilingual::TranslationLocale
   def self.register(file)
-    locale = file.locale.to_s
-    type = file.file_type.to_s
+    code = file.code.to_s
+    type = file.type.to_s
 
     opts = {}
     opts["#{type}_locale_file".to_sym] = file.path
 
-    locale_chain = locale.split('_')
+    locale_chain = code.split('_')
     opts[:fallbackLocale] = locale_chain.first if locale_chain.length === 2
 
-    current_locale = DiscoursePluginRegistry.locales[locale] || {}
+    current_locale = DiscoursePluginRegistry.locales[code] || {}
     new_locale = current_locale.merge(opts)
 
-    DiscoursePluginRegistry.register_locale(locale, new_locale)
+    DiscoursePluginRegistry.register_locale(code, new_locale)
   end
 
   def self.deregister(file)
-    DiscoursePluginRegistry.locales.delete(file.locale.to_s)
+    DiscoursePluginRegistry.locales.delete(file.code.to_s)
   end
 
   def self.load
@@ -25,6 +25,6 @@ class Multilingual::TranslationLocale
   end
 
   def self.files
-    Multilingual::CustomTranslation.by_type([:client, :server])
+    Multilingual::TranslationFile.by_type([:client, :server])
   end
 end

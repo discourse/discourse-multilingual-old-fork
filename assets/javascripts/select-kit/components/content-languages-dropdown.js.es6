@@ -7,7 +7,7 @@ import { set } from "@ember/object";
 
 export default DropdownSelectBox.extend({
   classNames: "content-languages-dropdown",
-  valueProperty: "locale",
+  valueProperty: "code",
   nameProperty: "name",
 
   selectKitOptions: {
@@ -34,7 +34,7 @@ export default DropdownSelectBox.extend({
       let activeIndex;
 
       content.forEach((l, i) => {
-        if (l.locale === param) {
+        if (l.code === param) {
           set(l, "classNames", `${l.classNames} active`);
           set(l, "icon", "times");
           activeIndex = i;
@@ -44,7 +44,7 @@ export default DropdownSelectBox.extend({
         }
       });
 
-      content.sort((a, b) => a.locale.localeCompare(b.locale));
+      content.sort((a, b) => a.code.localeCompare(b.code));
       content.splice(0, 0, content.splice(activeIndex, 1)[0]);
     }
 

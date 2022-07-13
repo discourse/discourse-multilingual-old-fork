@@ -22,7 +22,7 @@ pa:
   admin_js:
     multilingual:
       label: "Multilingual"
-      locale: "Locale"
+      code: "Code"
       documentation: Documentation
       languages:
         title: "Languages"

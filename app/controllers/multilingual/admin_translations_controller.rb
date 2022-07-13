@@ -2,8 +2,8 @@
 class Multilingual::AdminTranslationsController < Admin::AdminController
   def list
     serializer = ActiveModel::ArraySerializer.new(
-      Multilingual::CustomTranslation.all,
-      each_serializer: Multilingual::CustomTranslationSerializer
+      Multilingual::TranslationFile.all,
+      each_serializer: Multilingual::TranslationFileSerializer
     )
     render json: MultiJson.dump(serializer)
   end
@@ -22,19 +22,18 @@ class Multilingual::AdminTranslationsController < Admin::AdminController
       begin
         yml = YAML.safe_load(raw_file.tempfile)
 
-        file = raw_file.original_filename
+        opts = Multilingual::TranslationFile.process_filename(raw_file.original_filename)
+        raise opts[:error] if opts[:error]
 
-        opts = process_filename(file)
-          raise opts[:error] if opts[:error]
+        file = Multilingual::TranslationFile.new(opts)
 
-        locale, file_type, ext = opts.values_at(:locale, :file_type, :ext)
-
-        result = Multilingual::CustomTranslation.create!(file_name: file, locale: locale, file_type: file_type, file_ext: ext, translation_data: yml)
+        result = file.save(yml)
+        raise result[:error] if result[:error]
 
         data = {
           uploaded: true,
-          locale: result.locale,
-          file_type: result.file_type
+          code: file.code,
+          type: file.type
         }
       rescue => e
         data = failed_json.merge(errors: [e.message])
@@ -53,19 +52,18 @@ class Multilingual::AdminTranslationsController < Admin::AdminController
 
   def remove
     opts = translation_params
-
-    file = Multilingual::CustomTranslation.where(file_type: opts[:file_type], locale: opts[:locale]).first
+    file = Multilingual::TranslationFile.new(opts)
     file.remove
 
     render json: {
       removed: true,
-      locale: opts[:locale],
-      type: opts[:file_type]
+      code: opts[:code],
+      type: opts[:type]
     }
   end
 
   def download
-    file = Multilingual::CustomTranslation.new(translation_params)
+    file = Multilingual::TranslationFile.new(translation_params)
 
     send_file(
       file.path,
@@ -77,28 +75,6 @@ class Multilingual::AdminTranslationsController < Admin::AdminController
   protected
 
   def translation_params
-    params.permit(:locale, :file_type)
-  end
-
-  def process_filename(filename)
-    result = Hash.new
-
-    #TODO improve this with more standard/robust filename manipulation?
-    parts = filename.split('.')
-    result = {
-      file_type: parts[0],
-      locale: parts[1],
-      ext: parts[2]
-    }
-
-    if !Multilingual::Translation.validate_type(result[:file_type])
-      result[:error] = 'invalid type'
-    end
-
-    if result[:ext] != 'yml'
-      result[:error] = "incorrect format"
-    end
-
-    result
+    params.permit(:code, :type)
   end
 end

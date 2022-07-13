@@ -34,13 +34,13 @@ export default {
     if (currentUser) {
       hasLanguages =
         contentLanguages.filter((l) =>
-          isContentLanguage(l.locale, ctx.siteSettings)
+          isContentLanguage(l.code, ctx.siteSettings)
         ).length > 0;
 
-      if (!contentLanguages.some((l) => l.locale === "set_content_language")) {
+      if (!contentLanguages.some((l) => l.code === "set_content_language")) {
         contentLanguages.push({
           icon: "plus",
-          locale: "set_content_language",
+          code: "set_content_language",
           name: I18n.t("user.content_languages.set"),
         });
       }
