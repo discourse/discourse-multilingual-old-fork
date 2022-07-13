@@ -2,7 +2,7 @@
 class Multilingual::ContentLanguage
   include ActiveModel::Serialization
 
-  attr_reader :locale, :name
+  attr_reader :code, :name
 
   KEY ||= 'content_language'.freeze
 
@@ -16,19 +16,19 @@ class Multilingual::ContentLanguage
     SiteSetting.multilingual_content_languages_topic_filtering_enabled
   end
 
-  def initialize(locale, name)
-    @locale = locale
+  def initialize(code, name)
+    @code = code
     @name = name
   end
 
-  def self.excluded?(locale)
-    Multilingual::LanguageExclusion.get(KEY, locale)
+  def self.excluded?(code)
+    Multilingual::LanguageExclusion.get(KEY, code)
   end
 
-  def self.enabled?(locale)
-    Multilingual::Language.exists?(locale) &&
-    !excluded?(locale) &&
-    !Multilingual::ContentTag::Conflict.exists?(locale)
+  def self.enabled?(code)
+    Multilingual::Language.exists?(code) &&
+    !excluded?(code) &&
+    !Multilingual::ContentTag::Conflict.exists?(code)
   end
 
   def self.all
@@ -40,6 +40,6 @@ class Multilingual::ContentLanguage
   def self.list
     self.all.select { |k, v| self.enabled?(k) }
       .map { |k, v| self.new(k, v['nativeName']) }
-      .sort_by(&:locale)
+      .sort_by(&:code)
   end
 end

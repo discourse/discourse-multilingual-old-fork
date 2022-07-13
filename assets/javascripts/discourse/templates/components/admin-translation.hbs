@@ -1,13 +1,13 @@
-<td class="locale">
-  {{translation.locale}}
+<td class="code">
+  {{translation.code}}
 </td>
 
 <td class="types">
-  {{translation.file_type}}
+  {{translation.type}}
 </td>
 
 <td class="actions">
-  {{#d-button click=(action "remove")}}
+  {{#d-button action="remove"}}
     {{#if removing}}
       {{loading-spinner size="small"}}
     {{else}}
