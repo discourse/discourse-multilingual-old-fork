@@ -71,5 +71,6 @@ describe TopicQuery do
 
       expect(TopicQuery.new(user3).list_latest.topics.count).to eq(3)
     end
+
   end
 end

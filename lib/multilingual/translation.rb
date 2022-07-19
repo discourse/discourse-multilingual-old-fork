@@ -2,7 +2,7 @@
 class Multilingual::Translation
   KEY ||= "translation"
   CORE_TYPES ||= %w{client server}
-  CUSTOM_TYPES ||= %w{tag category_name}
+  CUSTOM_TYPES ||= %w{tag category_name category_description}
   TYPES = CORE_TYPES + CUSTOM_TYPES
 
   def self.validate_type(type)
@@ -11,11 +11,7 @@ class Multilingual::Translation
 
   def self.get_custom(type)
     Multilingual::Cache.wrap("#{KEY}_#{type.to_s}") do
-      result = {}
-      Multilingual::TranslationFile.by_type(type).each do |f|
-        result[f.code.to_s] = f.open
-      end
-      result
+      result = Multilingual::CustomTranslation.where(file_type: type) || {}
     end
   end
 
@@ -23,17 +19,54 @@ class Multilingual::Translation
     CUSTOM_TYPES.include?(type)
   end
 
-  def self.get(type, keys)
+  def self.get(type, keys = [])
     if is_custom(type)
       data = get_custom(type)
 
-      if type == 'category_name'
-        result = {}
-        data.each { |c, d| result[c] = recurse(d, keys.dup) }
-        result
-      else
-        data[keys]
+      return nil if data == {}
+
+      result = {}
+      data.each do |d|
+        if ['category_name', 'category_description'].include? (type)
+
+          yml_data = d["translation_data"]
+
+          locale = d["locale"]
+
+          this_result = look_for(yml_data, keys)
+
+          result[locale.to_sym] = this_result
+        else
+          locale = d["locale"]
+          result[locale.to_sym] = d["translation_data"]
+        end
       end
+      result
+    end
+  end
+
+  def self.look_for(data, keys)
+    return nil if data == {} || !keys.present?
+    if keys.first == data.first.first
+      if data.first.last.is_a?(Hash)
+        new_keys = keys.dup
+        new_keys.shift
+        if new_keys == [] then
+          look_for(data.first.last, ["_"])
+        else
+          look_for(data.first.last, new_keys)
+        end
+      else
+        if keys.count == 1
+          data.first.last
+        else
+          nil
+        end
+      end
+    else
+      new_data = data.dup
+      new_data.shift
+      look_for(new_data, keys)
     end
   end
 
@@ -47,10 +80,5 @@ class Multilingual::Translation
     return val if val.is_a?(String)
     return val["_"] if val.is_a?(Hash)
     nil
-  end
-
-  def self.setup
-    Multilingual::TranslationFile.load
-    Multilingual::TranslationLocale.load
   end
 end
