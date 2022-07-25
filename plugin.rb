@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 # name: discourse-multilingual
 # about: Features to support multilingual forums
-# version: 0.2.1
+# version: 0.2.2
 # url: https://github.com/paviliondev/discourse-multilingual
 # authors: Angus McLeod, Robert Barrow
 
@@ -166,7 +166,7 @@ after_initialize do
 
   add_class_method(:js_locale_helper, :output_locale_tags) do |locale_str|
     <<~JS
-      I18n.tag_translations = #{Multilingual::Translation.get("tag").to_json};
+      I18n.tag_translations = #{Multilingual::Translation.get("tag").slice(locale_str.to_sym).to_json};
     JS
   end
 
