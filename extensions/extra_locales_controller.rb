@@ -17,6 +17,14 @@ module ExtraLocalesControllerMultilingualClassExtension
       super(bundle)
     end
   end
+
+  def bundle_js_hash(bundle)
+    if bundle == "tags"
+      Digest::MD5.hexdigest(bundle_js(bundle))
+    else
+      super(bundle)
+    end
+  end
 end
 
 module ExtraLocalesControllerMultilingualExtension
