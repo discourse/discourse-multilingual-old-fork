@@ -21,9 +21,9 @@ pt:
         set: "Defina idiomas de conteúdo"
   admin_js:
     multilingual:
-      label: "Multilíngue"
+      label: "Multilingual"
       locale: "Locale"
-      documentation: Documentação
+      documentation: Documentation
       languages:
         title: "Idiomas"
         custom: "Personalizado"
